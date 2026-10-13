@@ -1,0 +1,43 @@
+// Point s4096-d20: slots 4096, depth 20, security 128, precision 20.
+//
+// The ring is 65536, and here the depth is what forces it, not the width:
+// twenty levels at a 50-bit scale plus the first modulus is 1060 bits of Q,
+// and OpenFHE refuses a ring of 32768 for it at 128-bit classic security —
+// "does not comply with HE standards recommendation (65536)", said before
+// anything runs. So the narrow point is not the cheap one. It runs in the
+// same ring as the wide point with an eighth of the slots in use, and every
+// ciphertext carries 21 residue polynomials instead of 11. That is what the
+// pair of points is for: one measures width, this one measures depth.
+//
+// Everything below is the wide point's config except batch_size and
+// mult_depth. Nothing is tuned per point, so the two measurements differ in
+// the parameters the point names and in nothing else.
+{
+  "scheme": "ckks",
+  "security": "HEStd_128_classic",
+
+  // 4096 of the 32768 slots this ring offers are packed. The rest of the
+  // ring is what twenty levels cost at this security level.
+  "ring_dimension": 65536,
+  "batch_size": 4096,
+
+  "mult_depth": 20,
+
+  // 50 bits of scale leaves around 28 bits of the product after one
+  // multiplication and rescale, where the point requires 20.
+  //
+  // OpenFHE 1.6.1 is required for this depth at this scale. 1.5.1 refuses it
+  // — "EstimateLogP() failure: expected sizeP [7], but got sizeP [6]", the
+  // auxiliary modulus of the hybrid key switch being sized in whole primes
+  // and twenty 50-bit levels landing on the boundary between six and seven
+  // of them. A 48-bit scale is the way to build this set under 1.5.1.
+  "scale_mod_size": 50,
+  "first_mod_size": 60,
+
+  // FIXEDMANUAL: the rescale is solve_run's, inside the measured call.
+  "scaling_technique": "FIXEDMANUAL",
+
+  "rotation_key_indexes": [],
+  "generate_sum_keys": false,
+  "enable_bootstrapping": false
+}

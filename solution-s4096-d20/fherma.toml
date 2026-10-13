@@ -1,0 +1,8 @@
+kind = "solution"
+spec = "ciphertext-multiplication/ckks@1.0.0"
+fingerprint = "sha256:00b5a2c81ec1b6fd"
+
+[fhe]
+library = "fideslib"
+library_version = "2.1.3"
+scheme = "ckks"
