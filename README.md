@@ -21,6 +21,15 @@ library.
 | `scale_mod_size` | 50 | 48 |
 | residue polynomials per ciphertext | 11 | 21 |
 
+## Two answers per point
+
+`solution-<point>` constructs its device ciphertexts per case;
+`solution-<point>-reused` allocates them once in `gpu_init` and loads the
+operands into them. The transfers are inside the measured call in both, so
+the difference between the two rows is what allocating 2 × (level + 1)
+residue polynomials on the device costs per multiplication. Nothing else
+differs: same `config.jsonc`, same call, same point.
+
 ## What is measured
 
 `solve_run` calls `gpu_mult`, and that is one FIDESlib call plus the two
