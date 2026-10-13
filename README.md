@@ -18,6 +18,7 @@ library.
 | point | slots 32768, depth 10, precision 15 | slots 4096, depth 20, precision 20 |
 | `ring_dimension` | 65536 | 65536 |
 | `batch_size` / `mult_depth` | 32768 / 10 | 4096 / 20 |
+| `scale_mod_size` | 50 | 48 |
 | residue polynomials per ciphertext | 11 | 21 |
 
 ## What is measured
@@ -42,14 +43,15 @@ single multiplication it is a large share of the measurement rather than a
 rounding error. A measurement of the arithmetic alone would need a native
 FIDESlib envelope, which would also hold the keys on the card.
 
-## The one parameter that may have to move
+## The one parameter that had to move
 
-The image carries FIDESlib's own patched OpenFHE 1.5.1. Stock 1.5.1 refuses
-the deep set at a 50-bit scale — *EstimateLogP() failure: expected sizeP [7],
-but got sizeP [6]* — where 1.6.1, which the CPU rows are built with, accepts
-it. If the patched build refuses it as well, the deep point moves to a 48-bit
-scale on both sides rather than on one, so that the pair keeps differing in
-the device alone.
+The image carries FIDESlib's own patched OpenFHE 1.5.1, and it refuses the
+deep set at a 50-bit scale exactly as the stock 1.5.1 does: the first
+measurement aborted with *EstimateLogP() failure: expected sizeP [7], but got
+sizeP [6]* before a single case ran. 1.6.1, which the CPU rows are built
+with, accepts that scale. So the deep point is measured at a 48-bit scale on
+both sides rather than on one, and the pair keeps differing in the device
+alone.
 
 ## Building it
 
