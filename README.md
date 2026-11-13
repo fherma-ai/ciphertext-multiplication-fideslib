@@ -21,7 +21,7 @@ library.
 | `scale_mod_size` | 50 | 48 |
 | residue polynomials per ciphertext | 11 | 21 |
 
-## Two answers per point
+## Three answers per point
 
 `solution-<point>` constructs its device ciphertexts per case;
 `solution-<point>-reused` allocates them once in `gpu_init` and loads the
@@ -29,6 +29,20 @@ operands into them. The transfers are inside the measured call in both, so
 the difference between the two rows is what allocating 2 × (level + 1)
 residue polynomials on the device costs per multiplication. Nothing else
 differs: same `config.jsonc`, same call, same point.
+
+`solution-<point>-split` is `-reused` with the transfers moved out of the
+measured call, into the two optional functions every loop calls around it
+(fherma-lang 0.20.0 and later):
+
+| Function | What it does | Reported as |
+| --- | --- | --- |
+| `fherma_h2d` → `gpu_h2d` | `GetRawCipherText` and `load` of both operands | `h2d_s` |
+| `solve_run` → `gpu_mult` | `mult(y, rescale)`, then `cudaDeviceSynchronize` | `seconds`, the score |
+| `fherma_d2h` → `gpu_d2h` | `store` and `GetOpenFHECipherText` of the answer | `d2h_s` |
+
+The arithmetic is `-reused`'s, call for call. Its `seconds` is the
+multiplication on the card; `seconds + h2d_s + d2h_s` is what `-reused`
+measures.
 
 ## What is measured
 
@@ -45,12 +59,12 @@ x.mult(y, /*rescale=*/true);   // tensor, key switch, rescale
 `FIXEDMANUAL`, which is what the config declares — so the measured call holds
 the same three stages the CPU answer's `EvalMult` + `RescaleInPlace` does.
 
-Both transfers are inside the window: the operands go to the card and the
-answer comes back as an OpenFHE ciphertext the envelope can decrypt. That is
-the convention the other FIDESlib answers on the platform follow, and for a
-single multiplication it is a large share of the measurement rather than a
-rounding error. A measurement of the arithmetic alone would need a native
-FIDESlib envelope, which would also hold the keys on the card.
+In `solution-<point>` and `-reused` both transfers are inside the window:
+the operands go to the card and the answer comes back as an OpenFHE
+ciphertext the envelope can decrypt. For a single multiplication that is a
+large share of the measurement rather than a rounding error. `-split` clocks
+them apart, so its score is the arithmetic alone; the keys were already on
+the card from `gpu_init`.
 
 ## The one parameter that had to move
 

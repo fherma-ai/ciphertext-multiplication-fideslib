@@ -1,0 +1,34 @@
+// Point s32768-d10: slots 32768, depth 10, security 128, precision 15.
+//
+// The point asks for 32768 slots, and CKKS packs at most ring/2 of them, so
+// the ring is 65536 — forced by the width, not by the depth: 10 levels at a
+// 50-bit scale spend 560 modulus bits, and 128-bit classic security allows
+// about 881 already at a ring of 32768. The width is what costs here.
+{
+  "scheme": "ckks",
+  "security": "HEStd_128_classic",
+
+  // ring/2 = 32768 slots, the point's width exactly.
+  "ring_dimension": 65536,
+  "batch_size": 32768,
+
+  // The point's depth. It is the capacity of the modulus chain, not the
+  // length of this circuit: one multiplication on a ciphertext that still
+  // carries eleven residue polynomials is the measurement being asked for.
+  "mult_depth": 10,
+
+  // 50 bits of scale per level, read out at 60. One multiplication and one
+  // rescale at this scale keeps around 30 bits of the product, which is
+  // twice the 15 the point requires — the margin is deliberate, so that what
+  // the board compares is the time and not a precision gamble.
+  "scale_mod_size": 50,
+  "first_mod_size": 60,
+
+  // FIXEDMANUAL: solve_run asks for the rescale itself, so the measured call
+  // holds the tensor, the relinearisation and the rescale and nothing else.
+  "scaling_technique": "FIXEDMANUAL",
+
+  "rotation_key_indexes": [],
+  "generate_sum_keys": false,
+  "enable_bootstrapping": false
+}
